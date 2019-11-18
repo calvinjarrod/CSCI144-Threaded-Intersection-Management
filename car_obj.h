@@ -14,6 +14,7 @@ enum direction{
 
 int char2Enum(const char c);
 char enum2Char(const int e);
+void thread_sleep(double value);
 
 enum turn {
 	straight,rightTurn,leftTurn,unknown

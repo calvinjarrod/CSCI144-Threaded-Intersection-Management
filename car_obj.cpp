@@ -1,6 +1,8 @@
 #include <cstdlib>
 #include <iostream>
 #include <climits>
+#include <chrono>
+#include <thread>
 #include "car_obj.h"
 
 using namespace std;
@@ -89,3 +91,10 @@ bool Car::operator<(Car const & rhs) {
 	return arrival < rhs.arrival;
 }
 
+void thread_sleep(double value) {
+	if ((int)value > 0) {
+		this_thread::sleep_for(chrono::seconds((int)value));
+	} else {
+		this_thread::sleep_for(chrono::milliseconds((int)(value*1000)));
+	}
+}
