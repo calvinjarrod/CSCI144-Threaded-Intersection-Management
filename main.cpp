@@ -111,6 +111,14 @@ int main(int argc, char* argv[]) {
 		Car *southCar = getSouthHead();
 		Car *eastCar = getEastHead();
 		Car *westCar = getWestHead();
+
+		// NOTIFY ALL THREADS TO CHECK IF THEY ARE THE CURRENT HEAD
+		front[N].notify_all();
+		front[S].notify_all();
+		front[E].notify_all();
+		front[W].notify_all();
+		thread_sleep(0.01);
+
 		// PICK NORTH AS STARTING PRIORITY CAR
 		if (priorityCar == NULL && priPos == U) {
 			priorityCar = northCar;
@@ -168,13 +176,15 @@ int main(int argc, char* argv[]) {
 		// =========================================================================
 		if (priPos == N) {
 			front[N].notify_all();
-			//cout<<"Just notified"<<endl;
-			this_thread::sleep_for(chrono::milliseconds(100));
+			thread_sleep(0.05); // must wait this long otherwise thread will not synch
+
 			// -----------------------------------------------------------------------
 			// AND THE PRIORITY CAR WANTS TO GO SOUTH
+			// NORTH GOING STRAIGHT
 			// -----------------------------------------------------------------------
 			if (priorityCar->want2Go == S) {
 				N2[S].notify_one();
+				thread_sleep(0.01);
 
 				// IF THERES A SOUTH CAR
 				if (southCar != NULL && southCar->arrival <= currentTime) {
@@ -280,9 +290,13 @@ int main(int argc, char* argv[]) {
 					E2[S].notify_one();
 				}
 			}
+		// =========================================================================
 		// IF THE PRIORITY CAR IS EAST
+		// =========================================================================
 		} else if (priPos == E) {
 			front[E].notify_all();
+			thread_sleep(0.05); // must wait this long otherwise thread will not synch
+
 			if (priorityCar->want2Go == N) {
 				if (westCar != NULL) {
 					// need to check if arrived yet. just call a function 
@@ -313,25 +327,176 @@ int main(int argc, char* argv[]) {
 				if (westCar != NULL) {
 					W2[N].notify_one();
 				}
+			// -----------------------------------------------------------------------
+			// AND THE PRIOTIRY CAR WANTS TO GO WEST
+			// EAST GOING STRAIGHT
+			// -----------------------------------------------------------------------
 			} else if (priorityCar->want2Go == W) {
-				if (southCar != NULL) {
-					S2[E].notify_one();
+				E2[W].notify_one();
+				thread_sleep(0.01);
+
+				// IF THERES A WEST CAR
+				if (westCar != NULL && westCar->arrival <= currentTime) {
+					front[W].notify_all();
+					thread_sleep(0.01);
+
+					// IF WEST CAR WANTS TO GO SOUTH, SOUTH CAR AN GO EAST
+					if (westCar->want2Go == S) {
+						W2[S].notify_one();
+						if (southCar != NULL && southCar->arrival <= currentTime && 
+							southCar->want2Go == N) {
+
+							front[S].notify_all();
+							thread_sleep(0.01);
+							S2[E].notify_one();
+							// SLEEP MAIN THREAD FOR 5 SECONDS
+							thread_sleep(5);
+							currentTime = currentTime+5;
+							thrSouth.front()->join();
+							thrSouth.pop_front();
+							south.pop_front();
+							thrWest.front()->join();
+							thrWest.pop_front();
+							west.pop_front();
+							thrEast.front()->join();
+							thrEast.pop_front();
+							east.pop_front();
+						// NO SOUTH CAR TO GO AT THE SAME TIME
+						} else {
+							thread_sleep(5);
+							currentTime = currentTime+5;
+							thrWest.front()->join();
+							thrWest.pop_front();
+							west.pop_front();
+							thrEast.front()->join();
+							thrEast.pop_front();
+							east.pop_front();
+						}
+					// IF WEST CAR WANTS TO GO EAST, ONLY WEST CAN GO
+					} else if (westCar->want2Go == E) {
+						W2[E].notify_one();
+						thread_sleep(5);
+						currentTime=currentTime+5;
+						thrWest.front()->join();
+						thrWest.pop_front();
+						west.pop_front();
+						thrEast.front()->join();
+						thrEast.pop_front();
+						east.pop_front();
+					}
+				// IF THERES AN SOUTH CAR AND NO EAST CAR	
+				} else if (southCar != NULL && southCar->arrival <= currentTime) {
+					// SOUTH CAR CAN ONLY GO EAST
+					if (southCar->want2Go == E) {
+						front[S].notify_all();
+						thread_sleep(0.01);
+						S2[E].notify_one();
+						thread_sleep(5);
+						currentTime=currentTime+5;
+						thrSouth.front()->join();
+						thrSouth.pop_front();
+						south.pop_front();
+						thrEast.front()->join();
+						thrEast.pop_front();
+						east.pop_front();
+					}
+				// ONLY EAST CAN GO
+				} else {
+					thread_sleep(5);
+					currentTime = currentTime+5;
+					thrEast.front()->join();
+					thrEast.pop_front();
+					east.pop_front();
 				}
-				if (westCar != NULL) {
-					W2[E].notify_one();
-					W2[S].notify_one();
-				}
+
 			}
+		// =========================================================================
 		// IF THE PRIORITY CAR IS SOUTH
+		// =========================================================================
 		} else if (priPos == S) {
 			front[S].notify_all();
+			thread_sleep(0.05); // must wait this long otherwise thread will not synch
+			
+			// -----------------------------------------------------------------------
+			// PRIORITY CAR WANTS TO GO NORTH
+			// SOUTH GOING STRAIGHT
+			// -----------------------------------------------------------------------
 			if (priorityCar->want2Go == N) {
-				if (northCar != NULL) {
-					N2[S].notify_one();
-					N2[W].notify_one();
-				}
-				if (westCar != NULL) {
-					W2[S].notify_one();
+				S2[N].notify_one();
+				thread_sleep(0.01);
+
+				// IF THERES A NORTH CAR
+				if (northCar != NULL && northCar->arrival <= currentTime) {
+					front[N].notify_all();
+					thread_sleep(0.01);
+
+					// IF NORTH CAR WANTS TO GO WEST, WEST CAR AN GO SOUTH
+					if (northCar->want2Go == W) {
+						N2[W].notify_one();
+						if (westCar != NULL && westCar->arrival <= currentTime && 
+							westCar->want2Go == S) {
+
+							front[W].notify_all();
+							thread_sleep(0.01);
+							W2[S].notify_one();
+							// SLEEP MAIN THREAD FOR 5 SECONDS
+							thread_sleep(5);
+							currentTime = currentTime+5;
+							thrWest.front()->join();
+							thrWest.pop_front();
+							west.pop_front();
+							thrNorth.front()->join();
+							thrNorth.pop_front();
+							north.pop_front();
+							thrSouth.front()->join();
+							thrSouth.pop_front();
+							south.pop_front();
+						// NO WEST CAR TO GO AT THE SAME TIME
+						} else {
+							thread_sleep(5);
+							currentTime = currentTime+5;
+							thrNorth.front()->join();
+							thrNorth.pop_front();
+							north.pop_front();
+							thrSouth.front()->join();
+							thrSouth.pop_front();
+							south.pop_front();
+						}
+					// IF NORTH CAR WANTS TO GO SOUTH, ONLY NORTH CAN GO
+					} else if (northCar->want2Go == S) {
+						N2[S].notify_one();
+						thread_sleep(5);
+						currentTime=currentTime+5;
+						thrNorth.front()->join();
+						thrNorth.pop_front();
+						north.pop_front();
+						thrSouth.front()->join();
+						thrSouth.pop_front();
+						south.pop_front();
+					}
+				// IF THERES AN WEST CAR AND NO NORTH CAR	
+				} else if (westCar != NULL && westCar->arrival <= currentTime) {
+					// WEST CAR CAN ONLY GO SOUTH
+					if (westCar->want2Go == S) {
+						front[W].notify_all();
+						thread_sleep(0.01);
+						W2[S].notify_one();
+						thread_sleep(5);
+						currentTime=currentTime+5;
+						thrWest.front()->join();
+						thrWest.pop_front();
+						west.pop_front();
+						thrSouth.front()->join();
+						thrSouth.pop_front();
+						south.pop_front();
+					}
+				// ONLY SOUTH CAN GO
+				} else {
+					thread_sleep(5);
+					currentTime = currentTime+5;
+					thrSouth.front()->join();
+					thrSouth.pop_front();
+					south.pop_front();
 				}
 			} else if (priorityCar->want2Go == E) {
 				if (northCar != NULL) {
@@ -358,9 +523,13 @@ int main(int argc, char* argv[]) {
 					E2[N].notify_one();
 				}
 			}
+		// =========================================================================
 		// IF THE PRIORITY CAR IS WEST
+		// =========================================================================
 		} else if (priPos == W) {
 			front[W].notify_all();
+			thread_sleep(0.05); // must wait this long otherwise thread will not synch
+
 			if (priorityCar->want2Go == N) {
 				if (northCar != NULL) {
 					N2[W].notify_one();
@@ -385,14 +554,88 @@ int main(int argc, char* argv[]) {
 					E2[W].notify_one();
 					E2[N].notify_one();
 				}
+			// -----------------------------------------------------------------------
+			// PRIORITY CAR WANTS TO GO EAST
+			// WEST CAR GOING STRAIGHT
+			// -----------------------------------------------------------------------
 			} else if (priorityCar->want2Go == E) {
-				if (northCar != NULL) {
-					N2[W].notify_one();
+				W2[E].notify_one();
+				thread_sleep(0.01);
+
+				// IF THERES A EAST CAR
+				if (eastCar != NULL && eastCar->arrival <= currentTime) {
+					front[E].notify_all();
+					thread_sleep(0.01);
+
+					// IF EAST CAR WANTS TO GO NORTH, NORTH CAR AN GO WEST
+					if (eastCar->want2Go == N) {
+						E2[N].notify_one();
+						if (northCar != NULL && northCar->arrival <= currentTime && 
+							northCar->want2Go == W) {
+
+							front[N].notify_all();
+							thread_sleep(0.01);
+							N2[W].notify_one();
+							// SLEEP MAIN THREAD FOR 5 SECONDS
+							thread_sleep(5);
+							currentTime = currentTime+5;
+							thrNorth.front()->join();
+							thrNorth.pop_front();
+							north.pop_front();
+							thrEast.front()->join();
+							thrEast.pop_front();
+							east.pop_front();
+							thrWest.front()->join();
+							thrWest.pop_front();
+							west.pop_front();
+						// NO NORTH CAR TO GO AT THE SAME TIME
+						} else {
+							thread_sleep(5);
+							currentTime = currentTime+5;
+							thrEast.front()->join();
+							thrEast.pop_front();
+							east.pop_front();
+							thrWest.front()->join();
+							thrWest.pop_front();
+							west.pop_front();
+						}
+					// IF EAST CAR WANTS TO GO WEST, ONLY EAST CAN GO
+					} else if (eastCar->want2Go == W) {
+						E2[W].notify_one();
+						thread_sleep(5);
+						currentTime=currentTime+5;
+						thrEast.front()->join();
+						thrEast.pop_front();
+						east.pop_front();
+						thrWest.front()->join();
+						thrWest.pop_front();
+						west.pop_front();
+					}
+				// IF THERES AN NORTH CAR AND NO WEST CAR	
+				} else if (northCar != NULL && northCar->arrival <= currentTime) {
+					// NORTH CAR CAN ONLY GO WEST
+					if (northCar->want2Go == W) {
+						front[N].notify_all();
+						thread_sleep(0.01);
+						N2[W].notify_one();
+						thread_sleep(5);
+						currentTime=currentTime+5;
+						thrNorth.front()->join();
+						thrNorth.pop_front();
+						north.pop_front();
+						thrWest.front()->join();
+						thrWest.pop_front();
+						west.pop_front();
+					}
+				// ONLY WEST CAN GO
+				} else {
+					thread_sleep(5);
+					currentTime = currentTime+5;
+					thrWest.front()->join();
+					thrWest.pop_front();
+					west.pop_front();
 				}
-				if (eastCar != NULL) {
-					E2[W].notify_one();
-					E2[N].notify_one();
-				}
+
 			}
 		}
 	}
