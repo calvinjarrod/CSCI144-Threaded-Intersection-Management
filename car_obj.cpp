@@ -23,8 +23,6 @@ char enum2Char(const int e) {
 	else return 'U';
 }
 
-
-
 Car::Car() {
 	want2Go = U;
 	want2Turn = 0;
@@ -37,13 +35,17 @@ Car::Car(const string str) {
 	int carDir;
 		
 	int line_iter = 0;
-	while (str[line_iter] != '.' && str[line_iter] != ' ') {
+	while (str[line_iter] != ' ' && str[line_iter] != '.') {
 		temp += str[line_iter++];
 	}
+	//while (isspace(str[line_iter+1]) || ispunct(str[line_iter+1]))
 	while (!isalpha(str[line_iter+1]))
 		line_iter++;
 	string dirPos = str.substr(line_iter+1);
+	while (!isalpha(dirPos.back())) dirPos.pop_back();
+	//dirPos = dirPos.substr(0,1);
 	arrival = stoi(temp);
+	//cout<<"Arrival: "<<arrival<<endl;
 	if (dirPos.size()==1) {
 		want2Go = char2Enum(dirPos[0]);
 		pos = oppositeDir(char2Enum(dirPos[0]));
@@ -54,6 +56,8 @@ Car::Car(const string str) {
 		want2Go = char2Enum(dirPos[1]);
 		setTurn();
 	}
+	//cout<<"Read car is: "<<enum2Char(pos)<<" at time "<<arrival<<" going: "\
+	//	<<enum2Char(want2Go)<<endl;
 }
 
 Car::~Car() {}
