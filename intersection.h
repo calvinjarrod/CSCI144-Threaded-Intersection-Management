@@ -20,13 +20,6 @@
 #include <chrono>
 #include "car.h"
 
-#define _DEBUG
-#ifdef _DEBUG
-#define dbout cout
-#else 
-#define dbout 0 && cout
-#endif
-
 
 class Intersection{
   private:

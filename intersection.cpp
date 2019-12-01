@@ -85,6 +85,11 @@ void Intersection::runIntersection() {
 	// MANAGE INTERSECTION
 	Car * priorityCar = NULL;
 	unsigned int priPos = U;
+
+	// USED TO ERASE CONTENTS OF results.txt AFTER RUNNING EACH CASE
+	ofstream fout;
+	fout.open("results.txt");
+	fout.close();
 	while (!arelistsEmpty()) {
 
 		Car *northCar = getNorthHead();
@@ -147,51 +152,39 @@ void Intersection::runIntersection() {
 			}
 		}
 		// CHECK IF THERE'S A CAR THAT HAS ARRIVED WITH SMALLER ARRIVAL TIME
-		pickCarShortestArrival(northCar,eastCar,southCar,westCar,\
-			&priorityCar,&priPos);
+		//pickCarShortestArrival(northCar,eastCar,southCar,westCar,\
+		//	&priorityCar,&priPos);
 		
 		// =========================================================================
 		// INTERSECTION MANAGEMENT -------------------------------------------------
 		// =========================================================================
 		// PRIORITY CAR IS NORTH ---------------------------------------------------
 		if (priPos == N && priorityCar->want2Go == S) {
-			//dbout<<"North car going south in run()"<<endl; 
 			northCarGoingSouth(northCar,eastCar,southCar,westCar);
 		} else if (priPos == N && priorityCar->want2Go == W) {
-			//dbout<<"North car going west in run()"<<endl;
 			northCarGoingWest(northCar,eastCar,southCar,westCar);
 		} else if (priPos == N && priorityCar->want2Go == E) {
-			//dbout<<"North car going east in run()"<<endl;
 			northCarGoingEast(northCar,eastCar,southCar,westCar);
 		// PRIORITY CAR IS EAST ----------------------------------------------------
 		} else if (priPos == E && priorityCar->want2Go == N) {
-			//dbout<<"East car going north in run()"<<endl;
 			eastCarGoingNorth(northCar,eastCar,southCar,westCar);
 		} else if (priPos == E && priorityCar->want2Go == S) {
-			//dbout<<"East car going south in run()"<<endl;
 			eastCarGoingSouth(northCar,eastCar,southCar,westCar);
 		} else if (priPos == E && priorityCar->want2Go == W) {
-			//dbout<<"East car going west in run()"<<endl;
 			eastCarGoingWest(northCar,eastCar,southCar,westCar);
 		// PRIORITY CAR IS SOUTH ---------------------------------------------------
 		} else if (priPos == S && priorityCar->want2Go == N) {
-			//dbout<<"South car going west in run()"<<endl;
 			southCarGoingNorth(northCar,eastCar,southCar,westCar);
 		} else if (priPos == S && priorityCar->want2Go == E) {
-			//dbout<<"South car going east in run()"<<endl;
 			southCarGoingEast(northCar,eastCar,southCar,westCar); 
 		} else if (priPos == S && priorityCar->want2Go == W) {
-			//dbout<<"South car going west in run()"<<endl;
 			southCarGoingWest(northCar,eastCar,southCar,westCar); 
 		// PRIORITY CAR IS WEST ----------------------------------------------------
 		} else if (priPos == W && priorityCar->want2Go == N) {
-			//dbout<<"West car going north in run()"<<endl;
 			westCarGoingNorth(northCar,eastCar,southCar,westCar);
 		} else if (priPos == W && priorityCar->want2Go == S) {
-			//dbout<<"West car going north in run()"<<endl;
 			westCarGoingSouth(northCar,eastCar,southCar,westCar); 
 		} else if (priPos == W && priorityCar->want2Go == E) {
-			//dbout<<"West car going east in run()"<<endl;
 			westCarGoingEast(northCar,eastCar,southCar,westCar);
 		}
 	// NOTIFY ALL THREADS TO CHECK IF THEY ARE THE CURRENT HEAD
@@ -271,41 +264,31 @@ void Intersection::carControl(Car *carClass) {
 	numCars++;
 	//cout<<enum2Char(oppositeDir(car->pos))<<" "<<car->arrival<<\
 		" thread started! Wants to go: "<<enum2Char(car->want2Go)<<endl;
-	//dbout<<enum2Char(car->pos)<<" "<<car->arrival<<\
-		" thread started! Wants to go: "<<enum2Char(car->want2Go)<<endl;
 	cout<<"Thread started"<<endl;
 	unique_lock<LOCK> lock(intersection_mutex[car->pos]);
 	while (!isHeadofList(car,car->pos) || car->arrival > currentTime) {
 		front[car->pos].wait(lock);
 	}
 	if (car->pos == N) {
-		dbout<<"North #"<<car->arrival<<" car arrived"<<endl;
-		//cout<<"South #"<<car->arrival<<" car arrived"<<endl;
+		cout<<"South #"<<car->arrival<<" car arrived"<<endl;
 		N2[car->want2Go].wait(lock);
 		thread_sleep(5);
-		dbout<<"North #"<<car->arrival<<" car left intersection"<<endl;
-		//cout<<"South #"<<car->arrival<<" car left intersection"<<endl;
+		cout<<"South #"<<car->arrival<<" car left intersection"<<endl;
 	} else if (car->pos == S) {
-		dbout<<"South #"<<car->arrival<<" car arrived"<<endl;
-		//cout<<"North #"<<car->arrival<<" car arrived"<<endl;
+		cout<<"North #"<<car->arrival<<" car arrived"<<endl;
 		S2[car->want2Go].wait(lock);
 		thread_sleep(5);
-		dbout<<"South #"<<car->arrival<<" car left intersection"<<endl;
-		//cout<<"North #"<<car->arrival<<" car left intersection"<<endl;
+		cout<<"North #"<<car->arrival<<" car left intersection"<<endl;
 	} else if (car->pos == E) {
-		dbout<<"East #"<<car->arrival<<" car arrived"<<endl;
-		//cout<<"West #"<<car->arrival<<" car arrived"<<endl;
+		cout<<"West #"<<car->arrival<<" car arrived"<<endl;
 		E2[car->want2Go].wait(lock);
 		thread_sleep(5);
-		dbout<<"East #"<<car->arrival<<" car left intersection"<<endl;
-		//cout<<"West #"<<car->arrival<<" car left intersection"<<endl;
+		cout<<"West #"<<car->arrival<<" car left intersection"<<endl;
 	} else if (car->pos == W) {
-		dbout<<"West #"<<car->arrival<<" car arrived"<<endl;
-		//cout<<"East #"<<car->arrival<<" car arrived"<<endl;
+		cout<<"East #"<<car->arrival<<" car arrived"<<endl;
 		W2[car->want2Go].wait(lock);
 		thread_sleep(5);
-		dbout<<"West #"<<car->arrival<<" car left intersection"<<endl;
-		//cout<<"East #"<<car->arrival<<" car left intersection"<<endl;
+		cout<<"East #"<<car->arrival<<" car left intersection"<<endl;
 	}
 	lock.unlock();
 	return;
@@ -480,16 +463,16 @@ void Intersection::northCarGoingEast(Car* northCar, Car* eastCar, Car* southCar,
 			thread_sleep(0.01);
 			W2[S].notify_one();
 	}
-	// ---------------------------------------------------------------------
-	// SOUTH CAR THAT WANTS TO GO WEST, NON-INTERSECTING LEFT TURN ---------
+	// ---------------------------------------------------------------------------
+	// SOUTH CAR THAT WANTS TO GO WEST, NON-INTERSECTING LEFT TURN ---------------
 	if (southCar != NULL && southCar->arrival <= currentTime &&
 		southCar->want2Go == W) {
 			front[S].notify_all();
 			thread_sleep(0.01);
 			S2[W].notify_one();
 	}
-	// ---------------------------------------------------------------------
-	// EAST CAR THAT WANTS TO GO NORTH, NON-INTERSECTING RIGHT TURN --------
+	// ---------------------------------------------------------------------------
+	// EAST CAR THAT WANTS TO GO NORTH, NON-INTERSECTING RIGHT TURN --------------
 	if (eastCar != NULL && eastCar->arrival <= currentTime &&
 		eastCar->want2Go == N) {
 			front[E].notify_all();
@@ -502,7 +485,7 @@ void Intersection::northCarGoingEast(Car* northCar, Car* eastCar, Car* southCar,
 	// JOIN THREADS THAT WERE ALLOWED IN THE INTERSECTION
 	if (westCar != NULL && westCar->arrival <= currentTime &&
 		westCar->want2Go == S) {
-			getWaitTime(westCar);	
+			getWaitTime(westCar);
 			thrWest.front()->join();
 			thrWest.pop_front();
 			west.pop_front();
@@ -525,7 +508,8 @@ void Intersection::northCarGoingEast(Car* northCar, Car* eastCar, Car* southCar,
 	getWaitTime(northCar);	
 	thrNorth.front()->join();
 	thrNorth.pop_front();
-	north.pop_front();			
+	north.pop_front();		
+
 }
 
 // -----------------------------------------------------------------------------
@@ -545,6 +529,7 @@ void Intersection::northCarGoingEast(Car* northCar, Car* eastCar, Car* southCar,
 */
 void Intersection::northCarGoingSouth(Car* northCar, Car* eastCar, Car* southCar,\
 	Car* westCar) {
+	
 	front[N].notify_all();
 	thread_sleep(0.05); // must wait this long otherwise thread will not synch
 
@@ -572,13 +557,19 @@ void Intersection::northCarGoingSouth(Car* northCar, Car* eastCar, Car* southCar
 				getWaitTime(eastCar);
 				getWaitTime(southCar);
 				getWaitTime(northCar);
+
+
 				thrEast.front()->join();
 				delete thrEast.front();
 				thrEast.pop_front();
 				east.pop_front();
+
+
 				thrSouth.front()->join();
 				thrSouth.pop_front();
 				south.pop_front();
+
+
 				thrNorth.front()->join();
 				thrNorth.pop_front();
 				north.pop_front();
@@ -588,9 +579,13 @@ void Intersection::northCarGoingSouth(Car* northCar, Car* eastCar, Car* southCar
 				currentTime = currentTime+5;
 				getWaitTime(southCar);
 				getWaitTime(northCar);	
+	
+	
 				thrSouth.front()->join();
 				thrSouth.pop_front();
 				south.pop_front();
+	
+
 				thrNorth.front()->join();
 				thrNorth.pop_front();
 				north.pop_front();
@@ -602,9 +597,13 @@ void Intersection::northCarGoingSouth(Car* northCar, Car* eastCar, Car* southCar
 			currentTime=currentTime+5;
 			getWaitTime(southCar);
 			getWaitTime(northCar);	
+
+
 			thrSouth.front()->join();
 			thrSouth.pop_front();
 			south.pop_front();
+
+
 			thrNorth.front()->join();
 			thrNorth.pop_front();
 			north.pop_front();
@@ -619,9 +618,13 @@ void Intersection::northCarGoingSouth(Car* northCar, Car* eastCar, Car* southCar
 		currentTime=currentTime+5;
 		getWaitTime(eastCar);
 		getWaitTime(northCar);	
+		
+
 		thrEast.front()->join();
 		thrEast.pop_front();
 		east.pop_front();
+
+
 		thrNorth.front()->join();
 		thrNorth.pop_front();
 		north.pop_front();
@@ -631,10 +634,13 @@ void Intersection::northCarGoingSouth(Car* northCar, Car* eastCar, Car* southCar
 		thread_sleep(5);
 		currentTime = currentTime+5;
 		getWaitTime(northCar);	
+
+
 		thrNorth.front()->join();
 		thrNorth.pop_front();
 		north.pop_front();
 	}
+
 }
 
 // -----------------------------------------------------------------------------
@@ -654,6 +660,7 @@ void Intersection::northCarGoingSouth(Car* northCar, Car* eastCar, Car* southCar
 */
 void Intersection::northCarGoingWest(Car* northCar, Car* eastCar, Car* southCar,\
 	Car* westCar) {
+	
 	front[N].notify_all();
 	thread_sleep(0.05); // must wait this long otherwise thread will not synch
 				
@@ -732,6 +739,8 @@ void Intersection::northCarGoingWest(Car* northCar, Car* eastCar, Car* southCar,
 	thread_sleep(5);
 	currentTime=currentTime+5;
 	getWaitTime(northCar);
+
+
 	thrNorth.front()->join();
 	thrNorth.pop_front();
 	north.pop_front();				
@@ -739,22 +748,30 @@ void Intersection::northCarGoingWest(Car* northCar, Car* eastCar, Car* southCar,
 	// USING SAME NESTED CONDITIONS TO ENSURE THE CORRECT JOINING OF THREADS
 	if (existsArrivedAndWants2Go(southCar, N)) {
 		getWaitTime(southCar);
+
+
 		thrSouth.front()->join();
 		thrSouth.pop_front();
 		south.pop_front();				
 		if (existsArrivedAndWants2Go(westCar,S)) {
 			getWaitTime(westCar);
+
+
 			thrWest.front()->join();
 			thrWest.pop_front();
 			west.pop_front();				
 		}
 	} else if (existsArrivedAndWants2Go(westCar,E)) {
 		getWaitTime(westCar);
+
+
 		thrWest.front()->join();
 		thrWest.pop_front();
 		west.pop_front();				
 		if (existsArrivedAndWants2Go(eastCar,N)) {
 			getWaitTime(eastCar);
+
+
 			thrEast.front()->join();
 			thrEast.pop_front();
 			east.pop_front();				
@@ -763,18 +780,24 @@ void Intersection::northCarGoingWest(Car* northCar, Car* eastCar, Car* southCar,
 		existsArrivedAndWants2Go(westCar,N)) {
 		if (existsArrivedAndWants2Go(eastCar,S)) {
 			getWaitTime(eastCar);
+
+
 			thrEast.front()->join();
 			thrEast.pop_front();
 			east.pop_front();				
 		}
 		if (existsArrivedAndWants2Go(westCar,N)) {
 			getWaitTime(westCar);
+
+
 			thrWest.front()->join();
 			thrWest.pop_front();
 			west.pop_front();				
 		};
 		if (existsArrivedAndWants2Go(southCar,E)) {
 			getWaitTime(southCar);
+
+
 			thrSouth.front()->join();
 			thrSouth.pop_front();
 			south.pop_front();				
@@ -782,23 +805,30 @@ void Intersection::northCarGoingWest(Car* northCar, Car* eastCar, Car* southCar,
 	} else {
 		if (existsArrivedAndWants2Go(westCar,S)) {
 			getWaitTime(westCar);
+
+
 			thrWest.front()->join();
 			thrWest.pop_front();
 			west.pop_front();				
 		}
 		if (existsArrivedAndWants2Go(southCar,E)) {
 			getWaitTime(southCar);
+
+
 			thrSouth.front()->join();
 			thrSouth.pop_front();
 			south.pop_front();				
 		}
 		if (existsArrivedAndWants2Go(eastCar,N)) {
 			getWaitTime(eastCar);
+
+
 			thrEast.front()->join();
 			thrEast.pop_front();
 			east.pop_front();				
 		}
 	}
+
 
 }
 
@@ -825,6 +855,7 @@ void Intersection::northCarGoingWest(Car* northCar, Car* eastCar, Car* southCar,
 */
 void Intersection::eastCarGoingNorth(Car* northCar, Car* eastCar, Car* southCar,\
 	Car* westCar) {
+	
 	front[E].notify_all();
 	thread_sleep(0.05); // must wait this long otherwise thread will not synch
 				
@@ -902,6 +933,8 @@ void Intersection::eastCarGoingNorth(Car* northCar, Car* eastCar, Car* southCar,
 	thread_sleep(5);
 	currentTime=currentTime+5;
 	getWaitTime(eastCar);
+
+
 	thrEast.front()->join();
 	thrEast.pop_front();
 	east.pop_front();				
@@ -920,11 +953,15 @@ void Intersection::eastCarGoingNorth(Car* northCar, Car* eastCar, Car* southCar,
 		}
 	} else if (existsArrivedAndWants2Go(northCar,S)) {
 		getWaitTime(northCar);
+
+
 		thrNorth.front()->join();
 		thrNorth.pop_front();
 		north.pop_front();				
 		if (existsArrivedAndWants2Go(southCar,E)) {
 			getWaitTime(southCar);
+
+
 			thrSouth.front()->join();
 			thrSouth.pop_front();
 			south.pop_front();				
@@ -933,18 +970,24 @@ void Intersection::eastCarGoingNorth(Car* northCar, Car* eastCar, Car* southCar,
 		existsArrivedAndWants2Go(southCar,W)) {
 		if (existsArrivedAndWants2Go(northCar,E)) {
 			getWaitTime(northCar);
+
+
 			thrNorth.front()->join();
 			thrNorth.pop_front();
 			north.pop_front();				
 		}
 		if (existsArrivedAndWants2Go(southCar,W)) {
 			getWaitTime(southCar);
+
+
 			thrSouth.front()->join();
 			thrSouth.pop_front();
 			south.pop_front();				
 		}
 		if (existsArrivedAndWants2Go(westCar,S)) {
 			getWaitTime(westCar);
+
+
 			thrWest.front()->join();
 			thrWest.pop_front();
 			west.pop_front();				
@@ -952,23 +995,30 @@ void Intersection::eastCarGoingNorth(Car* northCar, Car* eastCar, Car* southCar,
 	} else {
 		if (existsArrivedAndWants2Go(southCar,E)) {
 			getWaitTime(southCar);
+
+
 			thrSouth.front()->join();
 			thrSouth.pop_front();
 			south.pop_front();				
 		}
 		if (existsArrivedAndWants2Go(northCar,W)) {
 			getWaitTime(northCar);
+
+
 			thrNorth.front()->join();
 			thrNorth.pop_front();
 			north.pop_front();				
 		}
 		if (existsArrivedAndWants2Go(westCar,S)) {
 			getWaitTime(westCar);
+
+
 			thrWest.front()->join();
 			thrWest.pop_front();
 			west.pop_front();				
 		}
 	}
+
 }
 
 // -----------------------------------------------------------------------------
@@ -988,6 +1038,7 @@ void Intersection::eastCarGoingNorth(Car* northCar, Car* eastCar, Car* southCar,
 */
 void Intersection::eastCarGoingSouth(Car* northCar, Car* eastCar, Car* southCar,\
 	Car* westCar) {
+	
 	front[E].notify_all();
 	thread_sleep(0.05); // must wait this long otherwise thread will not synch
 
@@ -1024,6 +1075,8 @@ void Intersection::eastCarGoingSouth(Car* northCar, Car* eastCar, Car* southCar,
 	if (northCar != NULL && northCar->arrival <= currentTime &&
 		northCar->want2Go == W) {
 			getWaitTime(northCar);	
+
+
 			thrNorth.front()->join();
 			thrNorth.pop_front();
 			north.pop_front();
@@ -1031,6 +1084,8 @@ void Intersection::eastCarGoingSouth(Car* northCar, Car* eastCar, Car* southCar,
 	if (southCar != NULL && southCar->arrival <= currentTime &&
 		southCar->want2Go == E) {
 			getWaitTime(southCar);	
+
+
 			thrSouth.front()->join();
 			thrSouth.pop_front();
 			south.pop_front();
@@ -1038,14 +1093,19 @@ void Intersection::eastCarGoingSouth(Car* northCar, Car* eastCar, Car* southCar,
 	if (westCar != NULL && westCar->arrival <= currentTime &&
 		westCar->want2Go == N){
 			getWaitTime(westCar);	
+
+
 			thrWest.front()->join();
 			thrWest.pop_front();
 			west.pop_front();
 	}
 	getWaitTime(eastCar);	
+
+
 	thrEast.front()->join();
 	thrEast.pop_front();
 	east.pop_front();
+
 
 }
 
@@ -1066,6 +1126,7 @@ void Intersection::eastCarGoingSouth(Car* northCar, Car* eastCar, Car* southCar,
 */
 void Intersection::eastCarGoingWest(Car* northCar, Car* eastCar, Car* southCar,\
 	Car* westCar) {
+	
 	front[E].notify_all();
 	thread_sleep(0.05); // must wait this long otherwise thread will not synch
 
@@ -1155,6 +1216,7 @@ void Intersection::eastCarGoingWest(Car* northCar, Car* eastCar, Car* southCar,\
 		thrEast.pop_front();
 		east.pop_front();
 	}
+
 }
 
 // =============================================================================	
@@ -1179,6 +1241,7 @@ void Intersection::eastCarGoingWest(Car* northCar, Car* eastCar, Car* southCar,\
 */
 void Intersection::southCarGoingNorth(Car* northCar, Car* eastCar, Car* southCar,\
 	Car* westCar) {
+	
 	front[S].notify_all();
 	thread_sleep(0.05); // must wait this long otherwise thread will not synch
 
@@ -1268,6 +1331,7 @@ void Intersection::southCarGoingNorth(Car* northCar, Car* eastCar, Car* southCar
 		thrSouth.pop_front();
 		south.pop_front();
 	}
+
 }
 // -----------------------------------------------------------------------------
 // // // // // -----------------------------------------------------------------
@@ -1286,6 +1350,7 @@ void Intersection::southCarGoingNorth(Car* northCar, Car* eastCar, Car* southCar
 */
 void Intersection::southCarGoingEast(Car* northCar, Car* eastCar, Car* southCar,\
 	Car* westCar) {
+	
 	front[S].notify_all();
 	thread_sleep(0.05); // must wait this long otherwise thread will not synch
 
@@ -1431,6 +1496,7 @@ void Intersection::southCarGoingEast(Car* northCar, Car* eastCar, Car* southCar,
 			east.pop_front();				
 		}
 	}
+
 }
 
 // -----------------------------------------------------------------------------
@@ -1450,6 +1516,7 @@ void Intersection::southCarGoingEast(Car* northCar, Car* eastCar, Car* southCar,
 */
 void Intersection::southCarGoingWest(Car* northCar, Car* eastCar, Car* southCar,\
 	Car* westCar) {
+	
 	front[S].notify_all();
 	thread_sleep(0.05); // must wait this long otherwise thread will not synch
 
@@ -1508,6 +1575,7 @@ void Intersection::southCarGoingWest(Car* northCar, Car* eastCar, Car* southCar,
 	thrSouth.front()->join();
 	thrSouth.pop_front();
 	south.pop_front();
+
 }
 
 // =============================================================================	
@@ -1533,6 +1601,7 @@ void Intersection::southCarGoingWest(Car* northCar, Car* eastCar, Car* southCar,
 */
 void Intersection::westCarGoingNorth(Car* northCar, Car* eastCar, Car* southCar,\
 	Car* westCar) {
+	
 	front[W].notify_all();
 	thread_sleep(0.05); // must wait this long otherwise thread will not synch
 
@@ -1591,6 +1660,7 @@ void Intersection::westCarGoingNorth(Car* northCar, Car* eastCar, Car* southCar,
 	thrWest.front()->join();
 	thrWest.pop_front();
 	west.pop_front();
+
 }
 
 // -----------------------------------------------------------------------------
@@ -1610,6 +1680,7 @@ void Intersection::westCarGoingNorth(Car* northCar, Car* eastCar, Car* southCar,
 */
 void Intersection::westCarGoingEast(Car* northCar, Car* eastCar, Car* southCar,\
 	Car* westCar) {
+	
 	front[W].notify_all();
 	thread_sleep(0.05); // must wait this long otherwise thread will not synch
 
@@ -1700,6 +1771,7 @@ void Intersection::westCarGoingEast(Car* northCar, Car* eastCar, Car* southCar,\
 		thrWest.pop_front();
 		west.pop_front();
 	}
+
 }
 
 // -----------------------------------------------------------------------------
@@ -1719,6 +1791,7 @@ void Intersection::westCarGoingEast(Car* northCar, Car* eastCar, Car* southCar,\
 */
 void Intersection::westCarGoingSouth(Car* northCar, Car* eastCar, Car* southCar,\
 	Car* westCar) {
+	
 	front[W].notify_all();
 	thread_sleep(0.05); // must wait this long otherwise thread will not synch
 				
@@ -1864,6 +1937,7 @@ void Intersection::westCarGoingSouth(Car* northCar, Car* eastCar, Car* southCar,
 			east.pop_front();				
 		}
 	}
+
 }
 
 /**
@@ -1904,7 +1978,15 @@ bool Intersection::existsArrivedAndWants2Go(Car* checkCar, int dir) {
 		@return none
 */
 void Intersection::getWaitTime(Car* doneCar) {
+	ofstream fout;
+	fout.open("results.txt",ios_base::app);
 	waitTimes.push_back(currentTime-doneCar->arrival);
+	fout<<currentTime<<" "<<enum2Char(oppositeDir(doneCar->pos));
+	if (oppositeDir(doneCar->pos) != doneCar->want2Go) 
+		fout<<enum2Char(doneCar->want2Go)<<endl;
+	else fout<<endl;
+
+	fout.close();
 	return;
 } 
 
