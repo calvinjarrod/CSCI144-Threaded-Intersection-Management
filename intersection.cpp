@@ -152,8 +152,8 @@ void Intersection::runIntersection() {
 			}
 		}
 		// CHECK IF THERE'S A CAR THAT HAS ARRIVED WITH SMALLER ARRIVAL TIME
-		//pickCarShortestArrival(northCar,eastCar,southCar,westCar,\
-		//	&priorityCar,&priPos);
+		pickCarShortestArrival(northCar,eastCar,southCar,westCar,\
+			&priorityCar,&priPos);
 		
 		// =========================================================================
 		// INTERSECTION MANAGEMENT -------------------------------------------------
